@@ -8,7 +8,6 @@
 #include <sys/socket.h>
 #include <setjmp.h>
 #include "connection.h"
-#include "buffer.h"
 #include "cafiine.h"
 #include "beandef.h"
 #include "files.h"
