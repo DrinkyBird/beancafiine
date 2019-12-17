@@ -2,7 +2,6 @@
 #include <setjmp.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include <time.h>
 #include "stream.h"
 #include "byteorder.h"
 

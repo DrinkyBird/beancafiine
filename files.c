@@ -1,7 +1,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <sys/stat.h>
 #include "files.h"
 #include "byteorder.h"
 

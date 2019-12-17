@@ -1,11 +1,8 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <stdbool.h>
-#include <errno.h>
 #include <string.h>
-#include <sys/socket.h>
 #include <setjmp.h>
 #include "connection.h"
 #include "cafiine.h"
