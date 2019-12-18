@@ -81,6 +81,7 @@ void *connection_run(void *userdata) {
 
     while (running) {
         unsigned char command = stream_read_byte(&connection->stream);
+        printf("%d: command %02x\n", data->fd, command);
 
         switch (command) {
             case BYTE_OPEN: {

@@ -1,14 +1,22 @@
 #include <stdio.h>
-#include <sys/socket.h>
 #include <errno.h>
 #include <unistd.h>
-#include <netinet/in.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <getopt.h>
 #include <string.h>
 #include "connection.h"
 #include "files.h"
+#include "beandef.h"
+
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#else
+#include <sys/socket.h>
+#include <netinet/in.h>
+#endif
 
 #define CAFIINE_PORT 7332
 #define BACKLOG 10
@@ -21,6 +29,10 @@ static int listener_init();
 static void listener_run();
 static void listener_shutdown();
 
+#ifdef _WIN32
+static char *realpath(const char *path, char resolved_path[PATH_MAX]);
+#endif
+
 // options
 #define IS_OPT(n) (strcmp(long_options[option_index].name, n) == 0)
 
@@ -30,6 +42,9 @@ static const struct option long_options[] = {
 };
 
 int main(int argc, char *argv[]) {
+    // Hack required for CLion to properly handle stdout when in the debugger
+    setbuf(stdout, 0);
+
     char *rootdir = NULL;
 
     char defaultrootdir[512];
@@ -63,9 +78,17 @@ int main(int argc, char *argv[]) {
 }
 
 int listener_init() {
+#ifdef _WIN32
+    WSADATA wsaData;
+    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+        printf("Failed to start up WinSock.\n");
+        return WSAGetLastError();
+    }
+#endif
+
     socket_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (socket_fd == -1) {
-        perror("creating socket");
+        socket_perror("creating socket");
         return errno;
     }
 
@@ -73,7 +96,7 @@ int listener_init() {
         int yes = 1;
         int err = setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
         if (err == -1) {
-            perror("setsockopt(SO_REUSEADDR)");
+            socket_perror("setsockopt(SO_REUSEADDR)");
             return errno;
         }
     }
@@ -85,7 +108,7 @@ int listener_init() {
 
     int err = bind(socket_fd, (struct sockaddr *)&server_address, sizeof(server_address));
     if (err == -1) {
-        perror("bind");
+        socket_perror("bind");
         return errno;
     }
 
@@ -106,7 +129,7 @@ void listener_run() {
         socklen_t address_size = sizeof(client_address);
         int fd = accept(socket_fd, (struct sockaddr *)&client_address, &address_size);
         if (fd == -1) {
-            perror("accept");
+            socket_perror("accept");
             return;
         }
 
@@ -121,4 +144,31 @@ void listener_run() {
 
 void listener_shutdown() {
     close(socket_fd);
+
+#ifdef _WIN32
+    WSACleanup();
+#endif
 }
+
+void socket_perror(const char *msg) {
+#ifdef _WIN32
+    fprintf(stderr, "%s: %d\n", msg, WSAGetLastError());
+#else
+    fprintf(stderr, "%s: %s\n", msg, strerror(errno));
+#endif
+}
+
+#ifdef _WIN32
+char *realpath(const char *path, char resolved_path[PATH_MAX]) {
+    char *out = resolved_path;
+
+    if (!out) {
+        out = malloc(PATH_MAX + 1);
+        memset(out, 0, PATH_MAX + 1);
+    }
+
+    GetFullPathNameA(path, PATH_MAX, out, NULL);
+
+    return out;
+}
+#endif

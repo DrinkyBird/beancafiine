@@ -11,4 +11,6 @@ typedef union {
     uint64_t value;
 } titleid_t;
 
+void socket_perror(const char *msg);
+
 #endif //BEANCAFIINE_BEANDEF_H
