@@ -10,9 +10,9 @@
 #include "files.h"
 #include "stream.h"
 
-#define FD_MASK 0x0FFF00FF
+#define FD_MASK 0x0F0000FF
 #define FD_MASKIFY(handle) (FD_MASK | ((handle) << 8))
-#define FD_UNMASK(handle) ((handle >> 8) & 0xFF)
+#define FD_UNMASK(handle) ((handle >> 8) & 0xFFFF)
 #define FD_ISRIGHTMASK(handle) (((handle) & FD_MASK) == FD_MASK)
 
 extern bool running;
