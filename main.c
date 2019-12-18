@@ -81,7 +81,7 @@ int listener_init() {
     struct sockaddr_in server_address = { 0 };
     server_address.sin_family = AF_INET;
     server_address.sin_addr.s_addr = htonl(INADDR_ANY);
-    server_address.sin_port = htons((unsigned short)7332);
+    server_address.sin_port = htons((unsigned short)CAFIINE_PORT);
 
     int err = bind(socket_fd, (struct sockaddr *)&server_address, sizeof(server_address));
     if (err == -1) {
@@ -89,7 +89,7 @@ int listener_init() {
         return errno;
     }
 
-    err = listen(socket_fd, 10);
+    err = listen(socket_fd, BACKLOG);
     if (err == -1) {
         perror("listen");
         return errno;

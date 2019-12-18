@@ -10,9 +10,6 @@
 #include "files.h"
 #include "stream.h"
 
-#define READ_stream_SIZE 2048
-#define WRITE_stream_SIZE 2048
-
 #define FD_MASK 0x0FFF00FF
 #define FD_MASKIFY(handle) (FD_MASK | ((handle) << 8))
 #define FD_UNMASK(handle) ((handle >> 8) & 0xFF)
