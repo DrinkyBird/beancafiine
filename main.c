@@ -44,6 +44,7 @@ static const struct option long_options[] = {
 int main(int argc, char *argv[]) {
     // Hack required for CLion to properly handle stdout when in the debugger
     setbuf(stdout, 0);
+    setbuf(stderr, 0);
 
     char *rootdir = NULL;
 
@@ -132,6 +133,9 @@ void listener_run() {
             socket_perror("accept");
             return;
         }
+
+        int yes = 1;
+        //setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &yes, sizeof(yes));
 
         struct sockaddr_in *sin = (struct sockaddr_in*)&client_address;
 

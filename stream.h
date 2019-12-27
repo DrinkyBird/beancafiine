@@ -7,9 +7,13 @@
 
 typedef struct {
     int fd;
+    jmp_buf *errorjump;
+    bool *errormarker;
 } stream_t;
 
-void stream_init(stream_t *stream, int fd);
+
+
+void stream_init(stream_t *stream, int fd, bool *errormarker, jmp_buf *errorjump);
 
 ssize_t stream_write(stream_t *stream, void *source, size_t length);
 void stream_write_byte(stream_t *stream, unsigned char val);

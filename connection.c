@@ -10,9 +10,9 @@
 #include "files.h"
 #include "stream.h"
 
-#define FD_MASK 0x0F0000FF
+#define FD_MASK 0x0FFF00FF
 #define FD_MASKIFY(handle) (FD_MASK | ((handle) << 8))
-#define FD_UNMASK(handle) ((handle >> 8) & 0xFFFF)
+#define FD_UNMASK(handle) ((handle >> 8) & 0xFF)
 #define FD_ISRIGHTMASK(handle) (((handle) & FD_MASK) == FD_MASK)
 
 extern bool running;
@@ -35,9 +35,6 @@ typedef struct {
 static void *connection_run(void *userdata);
 static int connection_acquire_handle(connection_t *conn);
 
-__thread jmp_buf error_jmp;
-__thread bool thread_error = false;
-
 void connection_handle(int fd) {
     threaddata_t *data = malloc(sizeof(threaddata_t));
     data->fd = fd;
@@ -53,8 +50,11 @@ void *connection_run(void *userdata) {
     threaddata_t *data = (threaddata_t *)userdata;
     connection_t *connection = malloc(sizeof(connection_t));
 
+    jmp_buf error_jmp;
+    bool thread_error = false;
+
     connection->threaddata = data;
-    stream_init(&connection->stream, data->fd);
+    stream_init(&connection->stream, data->fd, &thread_error, &error_jmp);
 
     connection->handles = NULL;
     connection->handles_size = 0;
@@ -81,7 +81,6 @@ void *connection_run(void *userdata) {
 
     while (running) {
         unsigned char command = stream_read_byte(&connection->stream);
-        printf("%d: command %02x\n", data->fd, command);
 
         switch (command) {
             case BYTE_OPEN: {

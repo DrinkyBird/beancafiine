@@ -1,6 +1,7 @@
 #include <setjmp.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <time.h>
 #include "stream.h"
 #include "byteorder.h"
 #include "beandef.h"
@@ -12,23 +13,22 @@
 #include <sys/socket.h>
 #endif
 
-extern __thread jmp_buf error_jmp;
-extern __thread bool thread_error;
-
-void stream_init(stream_t *stream, int fd) {
+void stream_init(stream_t *stream, int fd, bool *errormarker, jmp_buf *errorjump) {
     stream->fd = fd;
+    stream->errormarker = errormarker;
+    stream->errorjump = errorjump;
 }
 
 ssize_t stream_write(stream_t *stream, void *source, size_t length) {
     int r = send(stream->fd, source, length, MSG_NOSIGNAL);
     if (r == -1) {
         socket_perror("send");
-        thread_error = true;
-        longjmp(error_jmp, 0);
+        *stream->errormarker = true;
+        longjmp(*stream->errorjump, 0);
         return -1;
     } else if (r == 0) {
-        thread_error = true;
-        longjmp(error_jmp, 0);
+        *stream->errormarker = true;
+        longjmp(*stream->errorjump, 0);
     }
 
     return r;
@@ -52,12 +52,12 @@ ssize_t stream_read(stream_t *stream, void *buffer, size_t length) {
     int r = recv(stream->fd, buffer, length, 0);
     if (r == -1) {
         socket_perror("recv");
-        thread_error = true;
-        longjmp(error_jmp, 0);
+        *stream->errormarker = true;
+        longjmp(*stream->errorjump, 0);
         return -1;
     } else if (r == 0) {
-        thread_error = true;
-        longjmp(error_jmp, 0);
+        *stream->errormarker = true;
+        longjmp(*stream->errorjump, 0);
     }
 
     return r;
